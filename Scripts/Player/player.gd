@@ -7,7 +7,7 @@ var speed := 0.0
 @export var jump_force := 4.5
 
 @export var gravity := 9.8
-@export var sensitivity := 0.01
+@export var sensitivity := 0.005
 
 @export_category("Camera BOB")
 @export var bob_freq := 2.0
@@ -15,8 +15,12 @@ var speed := 0.0
 var bob_time = 0.0
 
 @export_category("FOV")
-@export var base_fov = 75.0
-@export var fov_change = 1.5
+@export var base_fov := 75.0
+@export var fov_change := 1.5
+
+@export_category("Construction")
+@export var grid_size := 0.25
+
 
 @onready var head := $Head
 @onready var camera := $Head/Camera3D
@@ -32,18 +36,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	move(delta)
-	handle_headbob(delta)
-	move_and_slide()
-
-func handle_headbob(delta):
-	bob_time += delta * velocity.length() * float(is_on_floor())
-	head.transform.origin = _headbob(bob_time)
-
-func _headbob(time) -> Vector3:
-	var pos = Vector3.ZERO
-	pos.y = sin(time * bob_freq) * bob_amp
-	pos.x = cos(time * bob_freq / 2) * bob_amp
-	return pos
+	
 
 func move(delta):
 	if not is_on_floor():
@@ -64,6 +57,8 @@ func move(delta):
 	var target_fov = base_fov + fov_change * velocity_clamped
 	camera.fov = lerp(camera.fov, target_fov, delta * 8.0)
 	
+	handle_headbob(delta)
+	
 	if is_on_floor():
 		if direction:
 			velocity.x = direction.x * speed
@@ -74,3 +69,15 @@ func move(delta):
 	else:
 		velocity.x = lerp(velocity.x, direction.x * speed, delta * 3.0)
 		velocity.z = lerp(velocity.z, direction.z * speed, delta * 3.0)
+	
+	move_and_slide()
+
+func handle_headbob(delta):
+	bob_time += delta * velocity.length() * float(is_on_floor())
+	head.transform.origin = _headbob(bob_time)
+
+func _headbob(time) -> Vector3:
+	var pos = Vector3.ZERO
+	pos.y = sin(time * bob_freq) * bob_amp
+	pos.x = cos(time * bob_freq / 2) * bob_amp
+	return pos
