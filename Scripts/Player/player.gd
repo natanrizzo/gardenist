@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+@onready var head := $Head
+@onready var camera := $Head/Camera3D
+@onready var hand_target: Marker3D = $Head/HandTarget
+
 @export_category("Movement")
 var speed := 0.0
 @export var walk_speed := 5.0
@@ -20,10 +24,10 @@ var bob_time = 0.0
 
 @export_category("Construction")
 @export var grid_size := 0.25
-
-
-@onready var head := $Head
-@onready var camera := $Head/Camera3D
+var ghost_block: Node3D = null
+var objects : Array[Node3D] = []
+var cur_obj_idx = 0
+@export var ghost_block_ofset := 1.0 # Global position -= this value.
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -37,7 +41,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	move(delta)
 	
-
 func move(delta):
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -81,3 +84,20 @@ func _headbob(time) -> Vector3:
 	pos.y = sin(time * bob_freq) * bob_amp
 	pos.x = cos(time * bob_freq / 2) * bob_amp
 	return pos
+
+func spawn_ghost_block():
+	ghost_block = objects[cur_obj_idx].instantiate()
+	get_parent().add_child(ghost_block)
+	ghost_block.global_position = self.global_position
+	ghost_block.global_position.y -= ghost_block_ofset
+
+func snap_to_grid(pos: Vector3, grid_snap: float) -> Vector3:
+	var x = round(pos.x / grid_snap) * grid_size
+	var y = round(pos.y / grid_snap) * grid_size
+	var z = round(pos.z / grid_snap) * grid_size
+	return Vector3(x, y, z)
+
+func building(delta: float):
+	var snap_pos: Vector3 = snap_to_grid(hand_target.global_position, grid_size)
+	
+	pass
